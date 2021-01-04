@@ -2,6 +2,8 @@ import typing
 import sqlite3
 import requests
 
+from twitch_user_logger.api.database import user_exists, insert_user
+
 
 class Twitch:
     def __init__(self, client_id: str, client_secret: str, db: sqlite3.Connection = None):
@@ -14,7 +16,7 @@ class Twitch:
                 'Authorization': f'Bearer {self.access_token}'
             }
 
-    def _get_token(self, client_id, client_secret):
+    def _get_token(self, client_id, client_secret) -> typing.Dict:
         resp = requests.post(
             'https://id.twitch.tv/oauth2/token',
             data={
@@ -60,7 +62,7 @@ class Twitch:
 
         return resp.json()
 
-    def crawl_streams(self, after: str = None):
+    def crawl_streams(self, after: str = None) -> typing.Dict:
         data = {
             'first': 100
         }
@@ -78,3 +80,7 @@ class Twitch:
             raise Exception(resp.content)
 
         return resp.json()
+
+    def handle_user(self, user: typing.Dict) -> None:
+        if not user_exists(user.id):
+            insert_user(user)
